@@ -22,7 +22,7 @@ std::string getApplicationDirectory()
     std::size_t found = appPath.find_last_of("/\\");
     return appPath.substr(0,found);
 }
-typedef enum BagState(BAG_NORMAL,BAG_RECOVERY,BAG_OFF) BagState;
+typedef enum BagState{BAG_NORMAL,BAG_RECOVERY,BAG_OFF} BagState;
 
 	BagState stateCurr=BAG_NORMAL;
 	BagState statePrev=BAG_NORMAL;
