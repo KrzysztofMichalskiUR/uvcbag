@@ -4,6 +4,17 @@ project(uvcbag)
 add_compile_options(-std=c++11)
 find_package(catkin REQUIRED rosbag roscpp std_msgs geometry_msgs actionlib_msgs cartographer_ros_msgs)
 
+
+ add_service_files(
+     DIRECTORY srv
+     FILES
+     SetState.srv
+ )
+ generate_messages(
+  DEPENDENCIES
+  std_msgs
+)
+
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES uvcbag
@@ -15,6 +26,7 @@ include_directories(
  ${catkin_INCLUDE_DIRS}
  ${rosbag_INCLUDE_DIRS}
 )
+#gensrv()
 
 add_executable(${PROJECT_NAME} src/uvcbag.cpp)
 

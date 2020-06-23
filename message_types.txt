@@ -1,27 +1,92 @@
-#define actionlib_msgs_GoalStatusArray         	actionlib_msgs,GoalStatusArray
-#define	cartographer_ros_msgs_SubmapList       	cartographer_ros_msgs,SubmapList
-#define	dynamic_reconfigure_Config             	dynamic_reconfigure,Config
-#define	dynamic_reconfigure_ConfigDescription  	dynamic_reconfigure,ConfigDescription
-#define	gazebo_msgs_LinkStates                 	gazebo_msgs,LinkStates
-#define	gazebo_msgs_ModelStates                	gazebo_msgs,ModelStates
-#define	geometry_msgs_PointStamped             	geometry_msgs,PointStamped
-#define	geometry_msgs_PolygonStamped           	geometry_msgs,PolygonStamped
-#define	geometry_msgs_PoseStamped              	geometry_msgs,PoseStamped
-#define	geometry_msgs_PoseWithCovarianceStamped	geometry_msgs,PoseWithCovarianceStamped
-#define	geometry_msgs_Twist                    	geometry_msgs,Twist
-#define	map_msgs_OccupancyGridUpdate           	map_msgs,OccupancyGridUpdate
-#define	move_base_msgs_MoveBaseActionFeedback  	move_base_msgs,MoveBaseActionFeedback
-#define	move_base_msgs_MoveBaseActionGoal      	move_base_msgs,MoveBaseActionGoal
-#define	move_base_msgs_MoveBaseActionResult    	move_base_msgs,MoveBaseActionResult
-#define	nav_msgs_MapMetaData                   	nav_msgs,MapMetaData
-#define	nav_msgs_OccupancyGrid                 	nav_msgs,OccupancyGrid
-#define	nav_msgs_Odometry                      	nav_msgs,Odometry
-#define	nav_msgs_Path                          	nav_msgs,Path
-#define	rosgraph_msgs_Clock                    	rosgraph_msgs,Clock
-#define	rosgraph_msgs_Log                      	rosgraph_msgs,Log
-#define	sensor_msgs_Imu                        	sensor_msgs,Imu
-#define	sensor_msgs_JointState                 	sensor_msgs,JointState
-#define	sensor_msgs_LaserScan                  	sensor_msgs,LaserScan
-#define	sensor_msgs_PointCloud2                	sensor_msgs,PointCloud2
-#define	tf2_msgs_TFMessage                     	tf2_msgs,TFMessage
-#define	visualization_msgs_MarkerArray         	visualization_msgs,MarkerArray
+nav_msgs,MapMetaData
+map_msgs,OccupancyGridUpdate
+dynamic_reconfigure,ConfigDescription
+geometry_msgs,PoseStamped
+sensor_msgs,LaserScan
+dynamic_reconfigure,ConfigDescription
+geometry_msgs,PolygonStamped
+move_base_msgs,MoveBaseActionFeedback
+move_base_msgs,MoveBaseActionResult
+dynamic_reconfigure,Config
+tf2_msgs,TFMessage
+geometry_msgs,PointStamped
+nav_msgs,OccupancyGrid
+nav_msgs,Odometry
+dynamic_reconfigure,Config
+sensor_msgs,LaserScan
+nav_msgs,Path
+dynamic_reconfigure,Config
+nav_msgs,Path
+dynamic_reconfigure,ConfigDescription
+geometry_msgs,PoseStamped
+actionlib_msgs,GoalStatusArray
+dynamic_reconfigure,ConfigDescription
+map_msgs,OccupancyGridUpdate
+sensor_msgs,Imu
+dynamic_reconfigure,ConfigDescription
+dynamic_reconfigure,Config
+tf2_msgs,TFMessage
+dynamic_reconfigure,Config
+sensor_msgs,Imu
+dynamic_reconfigure,ConfigDescription
+nav_msgs,OccupancyGrid
+dynamic_reconfigure,Config
+geometry_msgs,Twist
+visualization_msgs,MarkerArray
+dynamic_reconfigure,Config
+dynamic_reconfigure,ConfigDescription
+dynamic_reconfigure,Config
+cartographer_ros_msgs,SubmapList
+geometry_msgs,PolygonStamped
+sensor_msgs,PointCloud2
+sensor_msgs,JointState
+rosgraph_msgs,Log
+move_base_msgs,MoveBaseActionGoal
+geometry_msgs,PoseWithCovarianceStamped
+rosgraph_msgs,Log
+nav_msgs,Path
+visualization_msgs,MarkerArray
+sensor_msgs,PointCloud2
+visualization_msgs,MarkerArray
+dynamic_reconfigure,ConfigDescription
+visualization_msgs,MarkerArray
+dynamic_reconfigure,ConfigDescription
+gazebo_msgs,LinkStates
+sensor_msgs,PointCloud2
+gazebo_msgs,ModelStates
+rosgraph_msgs,Clock
+dynamic_reconfigure,Config
+dynamic_reconfigure,ConfigDescription
+dynamic_reconfigure,Config
+dynamic_reconfigure,ConfigDescription
+nav_msgs,OccupancyGrid
+dynamic_reconfigure,Config
+map_msgs,OccupancyGridUpdate
+gazebo_msgs,LinkState
+geometry_msgs,PolygonStamped
+tf2_msgs,TFMessage
+nav_msgs,Odometry
+sensor_msgs,LaserScan
+nav_msgs,Path
+geometry_msgs,PoseStamped
+nav_msgs,Path
+sensor_msgs,Imu
+tf2_msgs,TFMessage
+sensor_msgs,Imu
+map_msgs,OccupancyGridUpdate
+nav_msgs,OccupancyGrid
+nav_msgs,Path
+geometry_msgs,Twist
+geometry_msgs,PolygonStamped
+sensor_msgs,PointCloud2
+sensor_msgs,JointState
+rosgraph_msgs,Log
+move_base_msgs,MoveBaseActionGoal
+nav_msgs,Path
+visualization_msgs,MarkerArray
+gazebo_msgs,ModelState
+rosgraph_msgs,Clock
+nav_msgs,OccupancyGrid
+actionlib_msgs,GoalID
+nav_msgs,Path
+

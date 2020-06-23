@@ -68,9 +68,6 @@
 #define	visualization_msgs_MarkerArray         	visualization_msgs,MarkerArray,27
 
 
-
-
-
 #define STRFY(x) #x
 
 #define AS_STRING(PRE,POST,NUM) STRFY(PRE/POST)
@@ -82,7 +79,7 @@
 #define AS_NUM(PRE,POST,NUM) NUM
 #define INV_AS_NUM(...) AS_NUM(__VA_ARGS__)
 
-#define MSG_CHOICE(PRE,POST,NUM) case INV_AS_NUM(PRE,POST,NUM): {dumpTopic<INV_AS_TYPE(PRE,POST,NUM)>(n,bag,topic);break;}
+#define MSG_CHOICE(PRE,POST,NUM) case INV_AS_NUM(PRE,POST,NUM): {dumpTopic<INV_AS_TYPE(PRE,POST,NUM)>(bag,topic);break;}
 #define INV_MSG_CHOICE(...)  MSG_CHOICE(__VA_ARGS__)
 
 #define AS_MAP_REC(PRE,POST,NUM) {AS_STRING(PRE,POST,NUM),NUM}
@@ -134,9 +131,10 @@ template <class T> class StatefullCb
 };
 */
 
-template <class T> void dumpTopic(ros::NodeHandle &n,rosbag::Bag& bag,std::string topic)
+template <class T> void dumpTopic(rosbag::Bag& bag,std::string topic)
 {
 	int msgNum=10;
+	ros::NodeHandle n;
 
 	auto pn=boost::typeindex::type_id<T>().pretty_name();
 	std::cout<<"T="<<pn<<std::endl;
@@ -153,7 +151,7 @@ template <class T> void dumpTopic(ros::NodeHandle &n,rosbag::Bag& bag,std::strin
 	std::cout<<std::endl;
 }
 
-void dumpAnyTopic(ros::NodeHandle& n,rosbag::Bag& bag,std::string topic,std::string type)
+void dumpAnyTopic(rosbag::Bag& bag,std::string topic,std::string type)
 {
 	std::cout<<"typeLookup["<<type<<"]="<<typeLookup[type]<<std::endl;
 	switch(typeLookup[type])
