@@ -36,100 +36,54 @@
 #include <boost/bind.hpp>
 #include <ros/ros.h>
 #include <boost/type_index.hpp>
+#include <array>
+#include <experimental/array>
+#include "frozen/unordered_map.h"
+
 
 //#include <node_handle.h>
+//
+unsigned constexpr const_hash(char const *input) {
+    return *input ?
+        static_cast<unsigned int>(*input) + 33 * const_hash(input + 1) :
+        5381;
+}
 
-#define actionlib_msgs_GoalStatusArray       	actionlib_msgs,GoalStatusArray,0
-#define	cartographer_ros_msgs_SubmapList       	cartographer_ros_msgs,SubmapList,1
-#define	dynamic_reconfigure_Config             	dynamic_reconfigure,Config,2
-#define	dynamic_reconfigure_ConfigDescription  	dynamic_reconfigure,ConfigDescription,3
-#define	gazebo_msgs_LinkStates                 	gazebo_msgs,LinkStates,4
-#define	gazebo_msgs_ModelStates                	gazebo_msgs,ModelStates,5
-#define	geometry_msgs_PointStamped             	geometry_msgs,PointStamped,6
-#define	geometry_msgs_PolygonStamped           	geometry_msgs,PolygonStamped,7
-#define	geometry_msgs_PoseStamped              	geometry_msgs,PoseStamped,8
-#define	geometry_msgs_PoseWithCovarianceStamped	geometry_msgs,PoseWithCovarianceStamped,9
-#define	geometry_msgs_Twist                    	geometry_msgs,Twist,10
-#define	map_msgs_OccupancyGridUpdate           	map_msgs,OccupancyGridUpdate,11
-#define	move_base_msgs_MoveBaseActionFeedback  	move_base_msgs,MoveBaseActionFeedback,13
-#define	move_base_msgs_MoveBaseActionGoal      	move_base_msgs,MoveBaseActionGoal,14
-#define	move_base_msgs_MoveBaseActionResult    	move_base_msgs,MoveBaseActionResult,15
-#define	nav_msgs_MapMetaData                   	nav_msgs,MapMetaData,16
-#define	nav_msgs_OccupancyGrid                 	nav_msgs,OccupancyGrid,17
-#define	nav_msgs_Odometry                      	nav_msgs,Odometry,18
-#define	nav_msgs_Path                          	nav_msgs,Path,19
-#define	rosgraph_msgs_Clock                    	rosgraph_msgs,Clock,20
-#define	rosgraph_msgs_Log                      	rosgraph_msgs,Log,21
-#define	sensor_msgs_Imu                        	sensor_msgs,Imu,22
-#define	sensor_msgs_JointState                 	sensor_msgs,JointState,23
-#define	sensor_msgs_LaserScan                  	sensor_msgs,LaserScan,24
-#define	sensor_msgs_PointCloud2                	sensor_msgs,PointCloud2,25
-#define	tf2_msgs_TFMessage                     	tf2_msgs,TFMessage,26
-#define	visualization_msgs_MarkerArray         	visualization_msgs,MarkerArray,27
+unsigned runtime_hash(char const *input) {
+    return *input ?
+        static_cast<unsigned int>(*input) + 33 * const_hash(input + 1) :
+        5381;
+}
 
-
-#define STRFY(x) #x
-
-#define AS_STRING(PRE,POST,NUM) STRFY(PRE/POST)
-#define INV_AS_STRING(...) AS_STRING(__VA_ARGS__)
-
-#define AS_TYPE(PRE,POST,NUM) PRE::POST
-#define INV_AS_TYPE(...) AS_TYPE(__VA_ARGS__)
-
-#define AS_NUM(PRE,POST,NUM) NUM
-#define INV_AS_NUM(...) AS_NUM(__VA_ARGS__)
-
-#define MSG_CHOICE(PRE,POST,NUM) case INV_AS_NUM(PRE,POST,NUM): {dumpTopic<INV_AS_TYPE(PRE,POST,NUM)>(bag,topic);break;}
-#define INV_MSG_CHOICE(...)  MSG_CHOICE(__VA_ARGS__)
-
-#define AS_MAP_REC(PRE,POST,NUM) {AS_STRING(PRE,POST,NUM),NUM}
-#define INV_AS_MAP_REC(...) AS_MAP_REC(__VA_ARGS__)
-std::map<std::string,int> typeLookup=
+template <typename V, typename... T>
+constexpr auto array_of(T&&... t)
+    -> std::array < V, sizeof...(T) >
 {
-	INV_AS_MAP_REC(	actionlib_msgs_GoalStatusArray       	),
-	INV_AS_MAP_REC(	cartographer_ros_msgs_SubmapList       	),
-	INV_AS_MAP_REC(	dynamic_reconfigure_Config             	),
-	INV_AS_MAP_REC(	dynamic_reconfigure_ConfigDescription  	),
-	INV_AS_MAP_REC(	gazebo_msgs_LinkStates                 	),
-	INV_AS_MAP_REC(	gazebo_msgs_ModelStates                	),
-	INV_AS_MAP_REC(	geometry_msgs_PointStamped             	),
-	INV_AS_MAP_REC(	geometry_msgs_PolygonStamped           	),
-	INV_AS_MAP_REC(	geometry_msgs_PoseStamped              	),
-	INV_AS_MAP_REC(	geometry_msgs_PoseWithCovarianceStamped	),
-	INV_AS_MAP_REC(	geometry_msgs_Twist                    	),
-	INV_AS_MAP_REC(	map_msgs_OccupancyGridUpdate           	),
-	INV_AS_MAP_REC(	move_base_msgs_MoveBaseActionFeedback  	),
-	INV_AS_MAP_REC(	move_base_msgs_MoveBaseActionGoal      	),
-	INV_AS_MAP_REC(	move_base_msgs_MoveBaseActionResult    	),
-	INV_AS_MAP_REC(	nav_msgs_MapMetaData                   	),
-	INV_AS_MAP_REC(	nav_msgs_OccupancyGrid                 	),
-	INV_AS_MAP_REC(	nav_msgs_Odometry                      	),
-	INV_AS_MAP_REC(	nav_msgs_Path                          	),
-	INV_AS_MAP_REC(	rosgraph_msgs_Clock                    	),
-	INV_AS_MAP_REC(	rosgraph_msgs_Log                      	),
-	INV_AS_MAP_REC(	sensor_msgs_Imu                        	),
-	INV_AS_MAP_REC(	sensor_msgs_JointState                 	),
-	INV_AS_MAP_REC(	sensor_msgs_LaserScan                  	),
-	INV_AS_MAP_REC(	sensor_msgs_PointCloud2                	),
-	INV_AS_MAP_REC(	tf2_msgs_TFMessage                     	),
-	INV_AS_MAP_REC(	visualization_msgs_MarkerArray         	)
-};
+    return {{ std::forward<T>(t)... }};
+}
+using _2strArr=std::array<const char*,2>;
+
 /*
-template <class T> class StatefullCb
+template<class Arr, Arr arr,int size, int i, unsigned cmpr0,unsigned cmpr1, bool> struct FindInArr
 {
-	public:
-	std::deque<T> msgs;
-	void operator()(const T & msg)
-	{
-		msgs.push_back(msg);
-	}
-	void _cb(const T & msg)
-	{
-		std::cout<<"Went into inner callback"<<std::endl;
-		msgs.push_back(msg);
-	}
-};
+  static const unsigned ret=FindInArr<Arr,arr,size,i+1,cmpr0,cmpr1,  ( const_hash(arr[i][0]) == cmpr0 && const_hash(arr[i][1]) ==cmpr1 )  || i>=size>::ret;
+}
+template<>  struct FindInArr<class Arr, Arr arr, int size, int i, unsigned cmpr0, unsigned cmpr1, true>
+{
+  static const unsigned ret=i-1;
+}
 */
+template <class T> struct ITopicType{};
+template<unsigned> struct TopicType;
+
+#define TOPIC_TYPE_SPECIALISATION(NAMESPACE,TYPE) template<> struct TopicType< const_hash(#NAMESPACE"/"#TYPE) > : ITopicType< TopicType<const_hash(#NAMESPACE"/"#TYPE)> >\
+  { static constexpr auto dumpFun=&dumpTopic<NAMESPACE::TYPE>;\
+    using type=NAMESPACE::TYPE;\
+    static const unsigned hash=const_hash(#NAMESPACE"/"#TYPE);  };
+
+#define TOPIC_INSTANTIATION(NAME,TYPE)  Topic<typename TopicType<const_hash( TYPE )>::type >{NAME}
+
+
 
 template <class T> void dumpTopic(rosbag::Bag& bag,std::string topic)
 {
@@ -149,39 +103,562 @@ template <class T> void dumpTopic(rosbag::Bag& bag,std::string topic)
 		bag.write(topic,std::max(ros::Time::now(),ros::TIME_MIN),*msgPtr);
 	}
 	std::cout<<std::endl;
+};
+
+/*
+auto Types = array_of<_2strArr  > (
+
+_2strArr{"actionlib_msgs"       ,"GoalStatusArray"}          ,
+_2strArr{"cartographer_ros_msgs","SubmapList"}               ,
+_2strArr{"dynamic_reconfigure"  ,"Config"}                   ,
+_2strArr{"dynamic_reconfigure"  ,"ConfigDescription"}        ,
+_2strArr{"gazebo_msgs"          ,"LinkStates"}               ,
+_2strArr{"gazebo_msgs"          ,"ModelStates"}              ,
+_2strArr{"geometry_msgs"        ,"PointStamped"}             ,
+_2strArr{"geometry_msgs"        ,"PolygonStamped"}           ,
+_2strArr{"geometry_msgs"        ,"PoseStamped"}              ,
+_2strArr{"geometry_msgs"        ,"PoseWithCovarianceStamped"},
+_2strArr{"geometry_msgs"        ,"Twist"}                    ,
+_2strArr{"map_msgs"             ,"OccupancyGridUpdate"}      ,
+_2strArr{"move_base_msgs"       ,"MoveBaseActionFeedback"}   ,
+_2strArr{"move_base_msgs"       ,"MoveBaseActionGoal"}       ,
+_2strArr{"move_base_msgs"       ,"MoveBaseActionResult"}     ,
+_2strArr{"nav_msgs"             ,"MapMetaData"}              ,
+_2strArr{"nav_msgs"             ,"OccupancyGrid"}            ,
+_2strArr{"nav_msgs"             ,"Odometry"}                 ,
+_2strArr{"nav_msgs"             ,"Path"}                     ,
+_2strArr{"rosgraph_msgs"        ,"Clock"}                    ,
+_2strArr{"rosgraph_msgs"        ,"Log"}                      ,
+_2strArr{"sensor_msgs"          ,"Imu"}                      ,
+_2strArr{"sensor_msgs"          ,"JointState"}               ,
+_2strArr{"sensor_msgs"          ,"LaserScan"}                ,
+_2strArr{"sensor_msgs"          ,"PointCloud2"}              ,
+_2strArr{"tf2_msgs"             ,"TFMessage"}                ,
+_2strArr{"visualization_msgs"   ,"MarkerArray"}              
+    );
+    */
+/*
+auto str_Types=std::experimental::make_array
+//array_of<char*>
+(
+  "actionlib_msgs"       "/""GoalStatusArray"          ,
+  "cartographer_ros_msgs""/""SubmapList"               ,
+  "dynamic_reconfigure"  "/""Config"                   ,
+  "dynamic_reconfigure"  "/""ConfigDescription"        ,
+  "gazebo_msgs"          "/""LinkStates"               ,
+  "gazebo_msgs"          "/""ModelStates"              ,
+  "geometry_msgs"        "/""PointStamped"             ,
+  "geometry_msgs"        "/""PolygonStamped"           ,
+  "geometry_msgs"        "/""PoseStamped"              ,
+  "geometry_msgs"        "/""PoseWithCovarianceStamped",
+  "geometry_msgs"        "/""Twist"                    ,
+  "map_msgs"             "/""OccupancyGridUpdate"      ,
+  "move_base_msgs"       "/""MoveBaseActionFeedback"   ,
+  "move_base_msgs"       "/""MoveBaseActionGoal"       ,
+  "move_base_msgs"       "/""MoveBaseActionResult"     ,
+  "nav_msgs"             "/""MapMetaData"              ,
+  "nav_msgs"             "/""OccupancyGrid"            ,
+  "nav_msgs"             "/""Odometry"                 ,
+  "nav_msgs"             "/""Path"                     ,
+  "rosgraph_msgs"        "/""Clock"                    ,
+  "rosgraph_msgs"        "/""Log"                      ,
+  "sensor_msgs"          "/""Imu"                      ,
+  "sensor_msgs"          "/""JointState"               ,
+  "sensor_msgs"          "/""LaserScan"                ,
+  "sensor_msgs"          "/""PointCloud2"              ,
+  "tf2_msgs"             "/""TFMessage"                ,
+  "visualization_msgs"   "/""MarkerArray"              
+);
+*/
+
+TOPIC_TYPE_SPECIALISATION(actionlib_msgs       ,GoalStatusArray          )
+TOPIC_TYPE_SPECIALISATION(cartographer_ros_msgs,SubmapList               )
+TOPIC_TYPE_SPECIALISATION(dynamic_reconfigure  ,Config                   )
+TOPIC_TYPE_SPECIALISATION(dynamic_reconfigure  ,ConfigDescription        )
+TOPIC_TYPE_SPECIALISATION(gazebo_msgs          ,LinkStates               )
+TOPIC_TYPE_SPECIALISATION(gazebo_msgs          ,ModelStates              )
+TOPIC_TYPE_SPECIALISATION(geometry_msgs        ,PointStamped             )
+TOPIC_TYPE_SPECIALISATION(geometry_msgs        ,PolygonStamped           )
+TOPIC_TYPE_SPECIALISATION(geometry_msgs        ,PoseStamped              )
+TOPIC_TYPE_SPECIALISATION(geometry_msgs        ,PoseWithCovarianceStamped)
+TOPIC_TYPE_SPECIALISATION(geometry_msgs        ,Twist                    )
+TOPIC_TYPE_SPECIALISATION(map_msgs             ,OccupancyGridUpdate      )
+TOPIC_TYPE_SPECIALISATION(move_base_msgs       ,MoveBaseActionFeedback   )
+TOPIC_TYPE_SPECIALISATION(move_base_msgs       ,MoveBaseActionGoal       )
+TOPIC_TYPE_SPECIALISATION(move_base_msgs       ,MoveBaseActionResult     )
+TOPIC_TYPE_SPECIALISATION(nav_msgs             ,MapMetaData              )
+TOPIC_TYPE_SPECIALISATION(nav_msgs             ,OccupancyGrid            )
+TOPIC_TYPE_SPECIALISATION(nav_msgs             ,Odometry                 )
+TOPIC_TYPE_SPECIALISATION(nav_msgs             ,Path                     )
+TOPIC_TYPE_SPECIALISATION(rosgraph_msgs        ,Clock                    )
+TOPIC_TYPE_SPECIALISATION(rosgraph_msgs        ,Log                      )
+TOPIC_TYPE_SPECIALISATION(sensor_msgs          ,Imu                      )
+TOPIC_TYPE_SPECIALISATION(sensor_msgs          ,JointState               )
+TOPIC_TYPE_SPECIALISATION(sensor_msgs          ,LaserScan                )
+TOPIC_TYPE_SPECIALISATION(sensor_msgs          ,PointCloud2              )
+TOPIC_TYPE_SPECIALISATION(tf2_msgs             ,TFMessage                )
+TOPIC_TYPE_SPECIALISATION(visualization_msgs   ,MarkerArray              )
+/*
+std::tuple <
+  TopicType<  const_hash("actionlib_msgs"       "/""GoalStatusArray"           ) >,
+  TopicType<  const_hash("cartographer_ros_msgs""/""SubmapList"                ) >,
+  TopicType<  const_hash("dynamic_reconfigure"  "/""Config"                    ) >,
+  TopicType<  const_hash("dynamic_reconfigure"  "/""ConfigDescription"         ) >,
+  TopicType<  const_hash("gazebo_msgs"          "/""LinkStates"                ) >,
+  TopicType<  const_hash("gazebo_msgs"          "/""ModelStates"               ) >,
+  TopicType<  const_hash("geometry_msgs"        "/""PointStamped"              ) >,
+  TopicType<  const_hash("geometry_msgs"        "/""PolygonStamped"            ) >,
+  TopicType<  const_hash("geometry_msgs"        "/""PoseStamped"               ) >,
+  TopicType<  const_hash("geometry_msgs"        "/""PoseWithCovarianceStamped" ) >,
+  TopicType<  const_hash("geometry_msgs"        "/""Twist"                     ) >,
+  TopicType<  const_hash("map_msgs"             "/""OccupancyGridUpdate"       ) >,
+  TopicType<  const_hash("move_base_msgs"       "/""MoveBaseActionFeedback"    ) >,
+  TopicType<  const_hash("move_base_msgs"       "/""MoveBaseActionGoal"        ) >,
+  TopicType<  const_hash("move_base_msgs"       "/""MoveBaseActionResult"      ) >,
+  TopicType<  const_hash("nav_msgs"             "/""MapMetaData"               ) >,
+  TopicType<  const_hash("nav_msgs"             "/""OccupancyGrid"             ) >,
+  TopicType<  const_hash("nav_msgs"             "/""Odometry"                  ) >,
+  TopicType<  const_hash("nav_msgs"             "/""Path"                      ) >,
+  TopicType<  const_hash("rosgraph_msgs"        "/""Clock"                     ) >,
+  TopicType<  const_hash("rosgraph_msgs"        "/""Log"                       ) >,
+  TopicType<  const_hash("sensor_msgs"          "/""Imu"                       ) >,
+  TopicType<  const_hash("sensor_msgs"          "/""JointState"                ) >,
+  TopicType<  const_hash("sensor_msgs"          "/""LaserScan"                 ) >,
+  TopicType<  const_hash("sensor_msgs"          "/""PointCloud2"               ) >,
+  TopicType<  const_hash("tf2_msgs"             "/""TFMessage"                 ) >,
+  TopicType<  const_hash("visualization_msgs"   "/""MarkerArray"               ) >
+> __Types;
+*/
+
+
+template <class T> struct Topic
+{
+  char* topicname;
+  int size_limit=10;
+  std::queue<T> buffor;
+  int putMsg( ros::NodeHandle& n)
+  {
+    if(buffor.size()>=size_limit)
+    {
+      buffor.pop();
+    }
+    auto msgPtr=ros::topic::waitForMessage<T>(topicname,n,ros::Duration(0.25));
+    buffor.push(*msgPtr);
+    return 1;
+  }
+  int dump(rosbag::Bag& bag)
+  {
+    while(buffor.size()>0)
+    {
+        bag.write(topicname,std::max(ros::Time::now(),ros::TIME_MIN),buffor.pop_front());
+    }
+    return 1;
+  }
+  ~Topic()
+  {
+  }
+};
+/*
+template<auto a> struct TupleHashMap
+{
+  constexpr auto arr=std::transform(a.begin(),a.end(),[](auto aa)
+      {
+        return Topic<typename TopicType<const_hash(aa[0])>::type>{aa[1]};
+      }
+      );
+  static constexpr frozen::unordered_map<int,unsigned,decltype(a)::size()> map=std::transform(a.begin(),a.end(),[](auto aa)
+      {
+        static int id=0;
+        return std::pair<unsigned,int>{const_hash(aa[0]),id++};
+      });
+  static constexpr auto get(unsigned h)
+  {
+    return std::get<map[h]>(arr);
+  }
+};
+*/
+/*
+template<auto input,auto fun> struct ConstComprehension
+{
+  static constexpr auto output=std::transform(input.begin(),input.end(),fun);
+};
+*/
+/*
+constexpr auto topics_arr=
+//    array_of<_2strArr>
+    std::make_tuple
+    (
+  _2strArr{"/map_metadata",                                                   "nav_msgs/MapMetaData"},
+  _2strArr{"/move_base/global_costmap/costmap_updates",                       "map_msgs/OccupancyGridUpdate"},
+  _2strArr{"/move_base/MyDWAPlannerROS/parameter_descriptions",               "dynamic_reconfigure/ConfigDescription"},
+  _2strArr{"/move_base/current_goal",                                         "geometry_msgs/PoseStamped"},
+  _2strArr{"/scan2",                                                          "sensor_msgs/LaserScan"},
+  _2strArr{"/move_base/parameter_descriptions",                               "dynamic_reconfigure/ConfigDescription"},
+  _2strArr{"/move_base/local_costmap/footprint",                              "geometry_msgs/PolygonStamped"},
+  _2strArr{"/move_base/feedback",                                             "move_base_msgs/MoveBaseActionFeedback"},
+  _2strArr{"/move_base/result",                                               "move_base_msgs/MoveBaseActionResult"},
+  _2strArr{"/move_base/global_costmap/parameter_updates",                     "dynamic_reconfigure/Config"},
+  _2strArr{"/tf",                                                             "tf2_msgs/TFMessage"},
+  _2strArr{"/clicked_point",                                                  "geometry_msgs/PointStamped"},
+  _2strArr{"/move_base/local_costmap/costmap",                                "nav_msgs/OccupancyGrid"},
+  _2strArr{"/odom",                                                           "nav_msgs/Odometry"},
+  _2strArr{"/move_base/global_costmap/static_layer/parameter_updates",        "dynamic_reconfigure/Config"},
+  _2strArr{"/scan",                                                           "sensor_msgs/LaserScan"},
+  _2strArr{"/move_base/MyDWAPlannerROS/global_plan",                          "nav_msgs/Path"},
+  _2strArr{"/move_base/local_costmap/Ginflater_layer/parameter_updates",      "dynamic_reconfigure/Config"},
+  _2strArr{"/move_base/parameter_updates",                                    "dynamic_reconfigure/Config"},
+  _2strArr{"/move_base/MyDWAPlannerROS/local_plan_best",                      "nav_msgs/Path"},
+  _2strArr{"/move_base/MyNavfnROS/plan",                                      "nav_msgs/Path"},
+  _2strArr{"/move_base/local_costmap/Ginflater_layer/parameter_descriptions", "dynamic_reconfigure/ConfigDescription"},
+  _2strArr{"/move_base_simple/goal",                                          "geometry_msgs/PoseStamped"},
+  _2strArr{"/move_base/status",                                               "actionlib_msgs/GoalStatusArray"},
+  _2strArr{"/move_base/global_costmap/static_layer/parameter_descriptions",   "dynamic_reconfigure/ConfigDescription"},
+  _2strArr{"/move_base/local_costmap/costmap_updates",                        "map_msgs/OccupancyGridUpdate"},
+  _2strArr{"/flat_imu",                                                       "sensor_msgs/Imu"},
+  _2strArr{"/move_base/local_costmap/parameter_descriptions",                 "dynamic_reconfigure/ConfigDescription"},
+  _2strArr{"/gazebo_gui/parameter_updates",                                   "dynamic_reconfigure/Config"},
+  _2strArr{"/tf_static",                                                      "tf2_msgs/TFMessage"},
+  _2strArr{"/move_base/global_costmap/inflation_layer/parameter_updates",     "dynamic_reconfigure/Config"},
+  _2strArr{"/imu",                                                            "sensor_msgs/Imu"},
+  _2strArr{"/gazebo/parameter_descriptions",                                  "dynamic_reconfigure/ConfigDescription"},
+  _2strArr{"/map",                                                            "nav_msgs/OccupancyGrid"},
+  _2strArr{"/move_base/MyDWAPlannerROS/parameter_updates",                    "dynamic_reconfigure/Config"},
+  _2strArr{"/cmd_vel",                                                        "geometry_msgs/Twist"},
+  _2strArr{"/landmark_poses_list",                                            "visualization_msgs/MarkerArray"},
+  _2strArr{"/move_base/local_costmap/Gobstacles_layer/parameter_updates",     "dynamic_reconfigure/Config"},
+  _2strArr{"/gazebo_gui/parameter_descriptions",                              "dynamic_reconfigure/ConfigDescription"},
+  _2strArr{"/move_base/local_costmap/parameter_updates",                      "dynamic_reconfigure/Config"},
+  _2strArr{"/submap_list",                                                    "cartographer_ros_msgs/SubmapList"},
+  _2strArr{"/move_base/global_costmap/footprint",                             "geometry_msgs/PolygonStamped"},
+  _2strArr{"/scan_matched_points2",                                           "sensor_msgs/PointCloud2"},
+  _2strArr{"/joint_states",                                                   "sensor_msgs/JointState"},
+  _2strArr{"/rosout",                                                         "rosgraph_msgs/Log"},
+  _2strArr{"/move_base/goal",                                                 "move_base_msgs/MoveBaseActionGoal"},
+  _2strArr{"/initialpose",                                                    "geometry_msgs/PoseWithCovarianceStamped"},
+  _2strArr{"/rosout_agg",                                                     "rosgraph_msgs/Log"},
+  _2strArr{"/move_base/MyDWAPlannerROS/local_plan",                           "nav_msgs/Path"},
+  _2strArr{"/recovery_sector_markers",                                        "visualization_msgs/MarkerArray"},
+  _2strArr{"/trajectory_node_list",                                           "visualization_msgs/MarkerArray"},
+  _2strArr{"/move_base/MyDWAPlannerROS/cost_cloud",                           "sensor_msgs/PointCloud2"},
+  _2strArr{"/move_base/MyNavfnROS/visualization_marker",                      "visualization_msgs/MarkerArray"},
+  _2strArr{"/move_base/global_costmap/inflation_layer/parameter_descriptions","dynamic_reconfigure/ConfigDescription"},
+  _2strArr{"/move_base/global_costmap/obstacle_layer/parameter_descriptions", "dynamic_reconfigure/ConfigDescription"},
+  _2strArr{"/constraint_list",                                                "visualization_msgs/MarkerArray"},
+  _2strArr{"/move_base/local_costmap/static_layer/parameter_descriptions",    "dynamic_reconfigure/ConfigDescription"},
+  _2strArr{"/gazebo/link_states",                                             "gazebo_msgs/LinkStates"},
+  _2strArr{"/move_base/MyDWAPlannerROS/trajectory_cloud",                     "sensor_msgs/PointCloud2"},
+  _2strArr{"/gazebo/model_states",                                            "gazebo_msgs/ModelStates"},
+  _2strArr{"/clock",                                                          "rosgraph_msgs/Clock"},
+  _2strArr{"/move_base/global_costmap/obstacle_layer/parameter_updates",      "dynamic_reconfigure/Config"},
+  _2strArr{"/move_base/local_costmap/Gobstacles_layer/parameter_descriptions","dynamic_reconfigure/ConfigDescription"},
+  _2strArr{"/move_base/local_costmap/static_layer/parameter_updates",         "dynamic_reconfigure/Config"},
+  _2strArr{"/move_base/global_costmap/parameter_descriptions",                "dynamic_reconfigure/ConfigDescription"},
+  _2strArr{"/move_base/global_costmap/costmap",                               "nav_msgs/OccupancyGrid"},
+  _2strArr{"/gazebo/parameter_updates",                                       "dynamic_reconfigure/Config"}
+   );
+*/
+
+  // constexpr 
+   auto TopicsDefault=std::make_tuple
+   (
+  TOPIC_INSTANTIATION("/map_metadata",                                                   "nav_msgs/MapMetaData"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/costmap_updates",                       "map_msgs/OccupancyGridUpdate"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/parameter_descriptions",               "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/current_goal",                                         "geometry_msgs/PoseStamped"),
+  TOPIC_INSTANTIATION("/scan2",                                                          "sensor_msgs/LaserScan"),
+  TOPIC_INSTANTIATION("/move_base/parameter_descriptions",                               "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/footprint",                              "geometry_msgs/PolygonStamped"),
+  TOPIC_INSTANTIATION("/move_base/feedback",                                             "move_base_msgs/MoveBaseActionFeedback"),
+  TOPIC_INSTANTIATION("/move_base/result",                                               "move_base_msgs/MoveBaseActionResult"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/parameter_updates",                     "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/tf",                                                             "tf2_msgs/TFMessage"),
+  TOPIC_INSTANTIATION("/clicked_point",                                                  "geometry_msgs/PointStamped"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/costmap",                                "nav_msgs/OccupancyGrid"),
+  TOPIC_INSTANTIATION("/odom",                                                           "nav_msgs/Odometry"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/static_layer/parameter_updates",        "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/scan",                                                           "sensor_msgs/LaserScan"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/global_plan",                          "nav_msgs/Path"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/Ginflater_layer/parameter_updates",      "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/move_base/parameter_updates",                                    "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/local_plan_best",                      "nav_msgs/Path"),
+  TOPIC_INSTANTIATION("/move_base/MyNavfnROS/plan",                                      "nav_msgs/Path"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/Ginflater_layer/parameter_descriptions", "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base_simple/goal",                                          "geometry_msgs/PoseStamped"),
+  TOPIC_INSTANTIATION("/move_base/status",                                               "actionlib_msgs/GoalStatusArray"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/static_layer/parameter_descriptions",   "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/costmap_updates",                        "map_msgs/OccupancyGridUpdate"),
+  TOPIC_INSTANTIATION("/flat_imu",                                                       "sensor_msgs/Imu"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/parameter_descriptions",                 "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/gazebo_gui/parameter_updates",                                   "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/tf_static",                                                      "tf2_msgs/TFMessage"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/inflation_layer/parameter_updates",     "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/imu",                                                            "sensor_msgs/Imu"),
+  TOPIC_INSTANTIATION("/gazebo/parameter_descriptions",                                  "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/map",                                                            "nav_msgs/OccupancyGrid"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/parameter_updates",                    "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/cmd_vel",                                                        "geometry_msgs/Twist"),
+  TOPIC_INSTANTIATION("/landmark_poses_list",                                            "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/Gobstacles_layer/parameter_updates",     "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/gazebo_gui/parameter_descriptions",                              "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/parameter_updates",                      "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/submap_list",                                                    "cartographer_ros_msgs/SubmapList"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/footprint",                             "geometry_msgs/PolygonStamped"),
+  TOPIC_INSTANTIATION("/scan_matched_points2",                                           "sensor_msgs/PointCloud2"),
+  TOPIC_INSTANTIATION("/joint_states",                                                   "sensor_msgs/JointState"),
+  TOPIC_INSTANTIATION("/rosout",                                                         "rosgraph_msgs/Log"),
+  TOPIC_INSTANTIATION("/move_base/goal",                                                 "move_base_msgs/MoveBaseActionGoal"),
+  TOPIC_INSTANTIATION("/initialpose",                                                    "geometry_msgs/PoseWithCovarianceStamped"),
+  TOPIC_INSTANTIATION("/rosout_agg",                                                     "rosgraph_msgs/Log"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/local_plan",                           "nav_msgs/Path"),
+  TOPIC_INSTANTIATION("/recovery_sector_markers",                                        "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/trajectory_node_list",                                           "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/cost_cloud",                           "sensor_msgs/PointCloud2"),
+  TOPIC_INSTANTIATION("/move_base/MyNavfnROS/visualization_marker",                      "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/inflation_layer/parameter_descriptions","dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/obstacle_layer/parameter_descriptions", "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/constraint_list",                                                "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/static_layer/parameter_descriptions",    "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/gazebo/link_states",                                             "gazebo_msgs/LinkStates"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/trajectory_cloud",                     "sensor_msgs/PointCloud2"),
+  TOPIC_INSTANTIATION("/gazebo/model_states",                                            "gazebo_msgs/ModelStates"),
+  TOPIC_INSTANTIATION("/clock",                                                          "rosgraph_msgs/Clock"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/obstacle_layer/parameter_updates",      "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/Gobstacles_layer/parameter_descriptions","dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/static_layer/parameter_updates",         "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/parameter_descriptions",                "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/costmap",                               "nav_msgs/OccupancyGrid"),
+  TOPIC_INSTANTIATION("/gazebo/parameter_updates",                                       "dynamic_reconfigure/Config")
+   );
+
+
+
+   auto TopicsRecovery=std::make_tuple
+   (
+  TOPIC_INSTANTIATION("/map_metadata",                                                   "nav_msgs/MapMetaData"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/costmap_updates",                       "map_msgs/OccupancyGridUpdate"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/parameter_descriptions",               "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/current_goal",                                         "geometry_msgs/PoseStamped"),
+  TOPIC_INSTANTIATION("/scan2",                                                          "sensor_msgs/LaserScan"),
+  TOPIC_INSTANTIATION("/move_base/parameter_descriptions",                               "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/footprint",                              "geometry_msgs/PolygonStamped"),
+  TOPIC_INSTANTIATION("/move_base/feedback",                                             "move_base_msgs/MoveBaseActionFeedback"),
+  TOPIC_INSTANTIATION("/move_base/result",                                               "move_base_msgs/MoveBaseActionResult"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/parameter_updates",                     "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/tf",                                                             "tf2_msgs/TFMessage"),
+  TOPIC_INSTANTIATION("/clicked_point",                                                  "geometry_msgs/PointStamped"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/costmap",                                "nav_msgs/OccupancyGrid"),
+  TOPIC_INSTANTIATION("/odom",                                                           "nav_msgs/Odometry"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/static_layer/parameter_updates",        "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/scan",                                                           "sensor_msgs/LaserScan"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/global_plan",                          "nav_msgs/Path"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/Ginflater_layer/parameter_updates",      "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/move_base/parameter_updates",                                    "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/local_plan_best",                      "nav_msgs/Path"),
+  TOPIC_INSTANTIATION("/move_base/MyNavfnROS/plan",                                      "nav_msgs/Path"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/Ginflater_layer/parameter_descriptions", "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base_simple/goal",                                          "geometry_msgs/PoseStamped"),
+  TOPIC_INSTANTIATION("/move_base/status",                                               "actionlib_msgs/GoalStatusArray"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/static_layer/parameter_descriptions",   "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/costmap_updates",                        "map_msgs/OccupancyGridUpdate"),
+  TOPIC_INSTANTIATION("/flat_imu",                                                       "sensor_msgs/Imu"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/parameter_descriptions",                 "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/gazebo_gui/parameter_updates",                                   "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/tf_static",                                                      "tf2_msgs/TFMessage"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/inflation_layer/parameter_updates",     "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/imu",                                                            "sensor_msgs/Imu"),
+  TOPIC_INSTANTIATION("/gazebo/parameter_descriptions",                                  "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/map",                                                            "nav_msgs/OccupancyGrid"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/parameter_updates",                    "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/cmd_vel",                                                        "geometry_msgs/Twist"),
+  TOPIC_INSTANTIATION("/landmark_poses_list",                                            "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/Gobstacles_layer/parameter_updates",     "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/gazebo_gui/parameter_descriptions",                              "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/parameter_updates",                      "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/submap_list",                                                    "cartographer_ros_msgs/SubmapList"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/footprint",                             "geometry_msgs/PolygonStamped"),
+  TOPIC_INSTANTIATION("/scan_matched_points2",                                           "sensor_msgs/PointCloud2"),
+  TOPIC_INSTANTIATION("/joint_states",                                                   "sensor_msgs/JointState"),
+  TOPIC_INSTANTIATION("/rosout",                                                         "rosgraph_msgs/Log"),
+  TOPIC_INSTANTIATION("/move_base/goal",                                                 "move_base_msgs/MoveBaseActionGoal"),
+  TOPIC_INSTANTIATION("/initialpose",                                                    "geometry_msgs/PoseWithCovarianceStamped"),
+  TOPIC_INSTANTIATION("/rosout_agg",                                                     "rosgraph_msgs/Log"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/local_plan",                           "nav_msgs/Path"),
+  TOPIC_INSTANTIATION("/recovery_sector_markers",                                        "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/trajectory_node_list",                                           "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/cost_cloud",                           "sensor_msgs/PointCloud2"),
+  TOPIC_INSTANTIATION("/move_base/MyNavfnROS/visualization_marker",                      "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/inflation_layer/parameter_descriptions","dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/obstacle_layer/parameter_descriptions", "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/constraint_list",                                                "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/static_layer/parameter_descriptions",    "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/gazebo/link_states",                                             "gazebo_msgs/LinkStates"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/trajectory_cloud",                     "sensor_msgs/PointCloud2"),
+  TOPIC_INSTANTIATION("/gazebo/model_states",                                            "gazebo_msgs/ModelStates"),
+  TOPIC_INSTANTIATION("/clock",                                                          "rosgraph_msgs/Clock"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/obstacle_layer/parameter_updates",      "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/Gobstacles_layer/parameter_descriptions","dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/static_layer/parameter_updates",         "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/parameter_descriptions",                "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/costmap",                               "nav_msgs/OccupancyGrid"),
+  TOPIC_INSTANTIATION("/gazebo/parameter_updates",                                       "dynamic_reconfigure/Config")
+   );
+
+
+
+   /*
+    *
+auto topicsDefault= std::transform(
+    topics_arr.begin(),
+    topics_arr.end(),
+    [](auto _topic_type)
+      {
+        return Topic<typename TopicType<const_hash( _topic_type[1] )>::type >{_topic_type[0]};
+      },
+      topics_arr.size()
+    );
+    */
+   /*
+constexpr auto _2strToTopic=[](const _2strArr _topic_type)
+{
+        constexpr  Topic<typename TopicType<const_hash( _topic_type[1] )>::type >{_topic_type[0]} t;
+        return t;
+};*/
+   /*
+ template<auto _topic_type> struct Str2Topic 
+{
+  static auto topic=Topic<typename TopicType<const_hash( _topic_type[1] )>::type >{_topic_type[0]} t;
+
+}
+template<auto v,class fun,int i=0, bool _=true,auto ... args>
+struct Comprehesion
+{
+  static auto output=std::tuple_cat( std::make_tuple( fun<std::get<i>(v)>::topic,args...) ),Comprehesion< v, fun, i+1, i<std::tuple_size(v), args ...>::output );
+};
+*/
+   /*
+template<auto v,auto fun,int i,auto ... args>
+struct Comprehesion<v,fun,i, false,args...>
+{
+  static auto output=std::make_tuple( fun(std::get<i>(v),args...) );
+};
+*/
+
+/*
+auto topicsDefault= Comprehesion<topics_arr,
+     [][](const _2strArr _topic_type)
+     {
+        return Topic<typename TopicType<const_hash( _topic_type[1] )>::type >{_topic_type[0]};
+     }
+     >::output;
+     */
+/*
+std::vector<std::string> strSplit(std::string s,std::string token)
+{
+  std::vector<std::string> ret;
+
+  std::stringstream ss(s);
+  std::string ns;
+  while (std::getline(ss, ns, token)) 
+ {
+    ret.push_back(ns);
+ }
+  return ret;
+
+}
+*/
+/*
+template< class Arr,class Fun,class ...Args> struct ConstexprForHeader
+{
+  static Arr arr;
+  static Fun fun;
+  static std::tuple<Args...> args;
+};
+template<class Header,int size,int i,bool> struct ConstexprFor
+{
+  static constexpr auto ret= std::tuple_cat(std::make_tuple(Header::fun(Header::arr[i],Header::args)),ConstexprFor<Header, size, i+1,i<size >::ret);
+};
+template <class Header,int size,int i>struct ConstexprFor<Header,size,i,false> 
+{
+*/
+//  static constexpr auto ret= std::make_tuple(Header::fun(Header::arr[i],Header::args));
+//};
+
+/*
+template<class _Arr,class _Fun,class... _Args> struct ComprehensionTypes
+{
+  using Arr=_Arr;
+  using Fun=_Fun;
+  using Args=std::tuple<_Args...>;
+
+  static Arr arr;
+  static Fun fun;
+  static static Args args; 
+};
+template <class CompTypes,int i,int size,bool> struct Comprehension
+{
+  return std::tuple_cat(std::make_tuple(CompTypes::fun(Co
+
+};
+*/
+/*
+template<class Header,int size,int i,bool> struct ConstexprForTuple
+{
+  static constexpr auto ret= std::tuple_cat(std::make_tuple(Header::fun(std::get<i>(Header::arr),Header::args)),ConstexprFor<Header, size, i+1,i<size >::ret);
+};
+template <class Header,int size,int i>struct ConstexprForTuple<Header,size,i,false> 
+{
+  static constexpr auto ret= std::make_tuple(Header::fun(std::get<i>(Header::arr),Header::args));
+};
+class Doer
+{
+  template<class T,class A> void operator(T topic,A args)
+  {
+    static auto fun=[](T t,unsigned hash,rosbag::Bag& bag,std::string topic)
+    {
+      if(T::hash==hash)
+      {
+        dumpTopic<T>(bag,topic);
+      }
+    }
+    std::apply(fun,std::cat_tuple(std::make_tuple(t),args));
+  }
+};
+*/
+
+void recordAnyTopic(rosbag::Bag& bag,ros::NodeHandle &n)
+{
+  /*
+  for( auto& t :Topics)
+  {
+    t.putMsg(n);
+    t.dump(bag);
+  }
+  */
+  std::apply([&n,&bag](auto&&... args) {((
+
+        args.putMsg(n) 
+        //&&
+//        args.dump(bag)
+
+          ), ...);}, Topics);
+
 }
 
-void dumpAnyTopic(rosbag::Bag& bag,std::string topic,std::string type)
+void recordAnyTopic(rosbag::Bag& bag,ros::NodeHandle &n)
 {
-	std::cout<<"typeLookup["<<type<<"]="<<typeLookup[type]<<std::endl;
-	switch(typeLookup[type])
-	{
-		INV_MSG_CHOICE(	actionlib_msgs_GoalStatusArray);
-		INV_MSG_CHOICE(	cartographer_ros_msgs_SubmapList       );
-		INV_MSG_CHOICE(	dynamic_reconfigure_Config             );
-		INV_MSG_CHOICE(	dynamic_reconfigure_ConfigDescription  );
-		INV_MSG_CHOICE(	gazebo_msgs_LinkStates                 );
-		INV_MSG_CHOICE(	gazebo_msgs_ModelStates                );
-		INV_MSG_CHOICE(	geometry_msgs_PointStamped             );
-		INV_MSG_CHOICE(	geometry_msgs_PolygonStamped           );
-		INV_MSG_CHOICE(	geometry_msgs_PoseStamped              );
-		INV_MSG_CHOICE(	geometry_msgs_PoseWithCovarianceStamped);
-		INV_MSG_CHOICE(	geometry_msgs_Twist                    );
-		INV_MSG_CHOICE(	map_msgs_OccupancyGridUpdate           );
-		INV_MSG_CHOICE(	move_base_msgs_MoveBaseActionFeedback  );
-		INV_MSG_CHOICE(	move_base_msgs_MoveBaseActionGoal      );
-		INV_MSG_CHOICE(	move_base_msgs_MoveBaseActionResult    );
-		INV_MSG_CHOICE(	nav_msgs_MapMetaData                   );
-		INV_MSG_CHOICE(	nav_msgs_OccupancyGrid                 );
-		INV_MSG_CHOICE(	nav_msgs_Odometry                      );
-		INV_MSG_CHOICE(	nav_msgs_Path                          );
-		INV_MSG_CHOICE(	rosgraph_msgs_Clock                    );
-		INV_MSG_CHOICE(	rosgraph_msgs_Log                      );
-		INV_MSG_CHOICE(	sensor_msgs_Imu                        );
-		INV_MSG_CHOICE(	sensor_msgs_JointState                 );
-		INV_MSG_CHOICE(	sensor_msgs_LaserScan                  );
-		INV_MSG_CHOICE(	sensor_msgs_PointCloud2                );
-		INV_MSG_CHOICE(	tf2_msgs_TFMessage                     );
-		INV_MSG_CHOICE(	visualization_msgs_MarkerArray         );
-	}
+  /*
+  for( auto& t :Topics)
+  {
+    t.putMsg(n);
+    t.dump(bag);
+  }
+  */
+  std::apply([&n,&bag](auto&&... args) {((
+
+        args.putMsg(n) 
+        //&&
+//        args.dump(bag)
+
+          ), ...);}, Topics);
+
 }

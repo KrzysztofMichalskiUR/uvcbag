@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(uvcbag)
 
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++17 -Wwrite-strings -fpermissive -Wwrite-strings)
 find_package(catkin REQUIRED rosbag roscpp std_msgs geometry_msgs actionlib_msgs cartographer_ros_msgs)
 
 
