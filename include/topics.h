@@ -39,10 +39,36 @@
 #include <array>
 #include <experimental/array>
 #include "frozen/unordered_map.h"
+#include <type_traits>
 
 
 //#include <node_handle.h>
 //
+/*
+template<auto if_true,auto if_false,bool cond> struct CexprTernary
+{
+  auto static output =if_true;
+}
+
+template<auto if_true,auto if_false,false> struct CexprTernary
+{
+  auto static output =if_false;
+}
+*/
+template<class T,int maxsize> struct CexprQ
+{
+  std::array<T,maxsize> arr;
+  int current_size=0;
+  T pop()
+  {
+      return arr[--current_size];
+  }
+  bool push(T t)
+  {
+    arr[current_size++]=t;
+  }
+
+};
 unsigned constexpr const_hash(char const *input) {
     return *input ?
         static_cast<unsigned int>(*input) + 33 * const_hash(input + 1) :
@@ -74,7 +100,7 @@ template<>  struct FindInArr<class Arr, Arr arr, int size, int i, unsigned cmpr0
 }
 */
 template <class T> struct ITopicType{};
-template<unsigned> struct TopicType;
+template<unsigned> struct TopicType; //just generating type and linking it to its name hash( because we can't use char* to specialise templates)
 
 #define TOPIC_TYPE_SPECIALISATION(NAMESPACE,TYPE) template<> struct TopicType< const_hash(#NAMESPACE"/"#TYPE) > : ITopicType< TopicType<const_hash(#NAMESPACE"/"#TYPE)> >\
   { static constexpr auto dumpFun=&dumpTopic<NAMESPACE::TYPE>;\
@@ -170,7 +196,8 @@ auto str_Types=std::experimental::make_array
   "visualization_msgs"   "/""MarkerArray"              
 );
 */
-
+//every type of ros message must be registered here,
+//                        namespace/header      class
 TOPIC_TYPE_SPECIALISATION(actionlib_msgs       ,GoalStatusArray          )
 TOPIC_TYPE_SPECIALISATION(cartographer_ros_msgs,SubmapList               )
 TOPIC_TYPE_SPECIALISATION(dynamic_reconfigure  ,Config                   )
@@ -235,10 +262,12 @@ template <class T> struct Topic
 {
   char* topicname;
   int size_limit=10;
-  std::queue<T> buffor;
+  std::queue<T> 
+//  CexprQ< T, 10>
+    buffor;
   int putMsg( ros::NodeHandle& n)
   {
-    if(buffor.size()>=size_limit)
+    if(buffor.size()==size_limit)
     {
       buffor.pop();
     }
@@ -250,7 +279,8 @@ template <class T> struct Topic
   {
     while(buffor.size()>0)
     {
-        bag.write(topicname,std::max(ros::Time::now(),ros::TIME_MIN),buffor.pop_front());
+        bag.write(topicname,std::max(ros::Time::now(),ros::TIME_MIN),buffor.front());
+        buffor.pop();
     }
     return 1;
   }
@@ -359,6 +389,7 @@ constexpr auto topics_arr=
 */
 
   // constexpr 
+   /*
    auto TopicsDefault=std::make_tuple
    (
   TOPIC_INSTANTIATION("/map_metadata",                                                   "nav_msgs/MapMetaData"),
@@ -429,10 +460,11 @@ constexpr auto topics_arr=
   TOPIC_INSTANTIATION("/move_base/global_costmap/costmap",                               "nav_msgs/OccupancyGrid"),
   TOPIC_INSTANTIATION("/gazebo/parameter_updates",                                       "dynamic_reconfigure/Config")
    );
-
-
-
-   auto TopicsRecovery=std::make_tuple
+*/
+//   constexpr 
+    auto getTopicsDefault() //Here we set topic lists
+  {
+    return std::make_tuple
    (
   TOPIC_INSTANTIATION("/map_metadata",                                                   "nav_msgs/MapMetaData"),
   TOPIC_INSTANTIATION("/move_base/global_costmap/costmap_updates",                       "map_msgs/OccupancyGridUpdate"),
@@ -502,6 +534,86 @@ constexpr auto topics_arr=
   TOPIC_INSTANTIATION("/move_base/global_costmap/costmap",                               "nav_msgs/OccupancyGrid"),
   TOPIC_INSTANTIATION("/gazebo/parameter_updates",                                       "dynamic_reconfigure/Config")
    );
+
+  }
+//  using DefTopicList=std::result_of<getTopicsDefault>::type;
+//  using DefTopicList=typename std::result_of<getTopicsDefault()>::type;
+
+
+
+   auto getTopicsRecovery()
+{
+  return std::make_tuple
+   (
+  TOPIC_INSTANTIATION("/map_metadata",                                                   "nav_msgs/MapMetaData"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/costmap_updates",                       "map_msgs/OccupancyGridUpdate"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/parameter_descriptions",               "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/current_goal",                                         "geometry_msgs/PoseStamped"),
+  TOPIC_INSTANTIATION("/scan2",                                                          "sensor_msgs/LaserScan"),
+  TOPIC_INSTANTIATION("/move_base/parameter_descriptions",                               "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/footprint",                              "geometry_msgs/PolygonStamped"),
+  TOPIC_INSTANTIATION("/move_base/feedback",                                             "move_base_msgs/MoveBaseActionFeedback"),
+  TOPIC_INSTANTIATION("/move_base/result",                                               "move_base_msgs/MoveBaseActionResult"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/parameter_updates",                     "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/tf",                                                             "tf2_msgs/TFMessage"),
+  TOPIC_INSTANTIATION("/clicked_point",                                                  "geometry_msgs/PointStamped"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/costmap",                                "nav_msgs/OccupancyGrid"),
+  TOPIC_INSTANTIATION("/odom",                                                           "nav_msgs/Odometry"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/static_layer/parameter_updates",        "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/scan",                                                           "sensor_msgs/LaserScan"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/global_plan",                          "nav_msgs/Path"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/Ginflater_layer/parameter_updates",      "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/move_base/parameter_updates",                                    "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/local_plan_best",                      "nav_msgs/Path"),
+  TOPIC_INSTANTIATION("/move_base/MyNavfnROS/plan",                                      "nav_msgs/Path"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/Ginflater_layer/parameter_descriptions", "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base_simple/goal",                                          "geometry_msgs/PoseStamped"),
+  TOPIC_INSTANTIATION("/move_base/status",                                               "actionlib_msgs/GoalStatusArray"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/static_layer/parameter_descriptions",   "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/costmap_updates",                        "map_msgs/OccupancyGridUpdate"),
+  TOPIC_INSTANTIATION("/flat_imu",                                                       "sensor_msgs/Imu"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/parameter_descriptions",                 "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/gazebo_gui/parameter_updates",                                   "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/tf_static",                                                      "tf2_msgs/TFMessage"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/inflation_layer/parameter_updates",     "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/imu",                                                            "sensor_msgs/Imu"),
+  TOPIC_INSTANTIATION("/gazebo/parameter_descriptions",                                  "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/map",                                                            "nav_msgs/OccupancyGrid"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/parameter_updates",                    "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/cmd_vel",                                                        "geometry_msgs/Twist"),
+  TOPIC_INSTANTIATION("/landmark_poses_list",                                            "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/Gobstacles_layer/parameter_updates",     "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/gazebo_gui/parameter_descriptions",                              "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/parameter_updates",                      "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/submap_list",                                                    "cartographer_ros_msgs/SubmapList"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/footprint",                             "geometry_msgs/PolygonStamped"),
+  TOPIC_INSTANTIATION("/scan_matched_points2",                                           "sensor_msgs/PointCloud2"),
+  TOPIC_INSTANTIATION("/joint_states",                                                   "sensor_msgs/JointState"),
+  TOPIC_INSTANTIATION("/rosout",                                                         "rosgraph_msgs/Log"),
+  TOPIC_INSTANTIATION("/move_base/goal",                                                 "move_base_msgs/MoveBaseActionGoal"),
+  TOPIC_INSTANTIATION("/initialpose",                                                    "geometry_msgs/PoseWithCovarianceStamped"),
+  TOPIC_INSTANTIATION("/rosout_agg",                                                     "rosgraph_msgs/Log"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/local_plan",                           "nav_msgs/Path"),
+  TOPIC_INSTANTIATION("/recovery_sector_markers",                                        "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/trajectory_node_list",                                           "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/cost_cloud",                           "sensor_msgs/PointCloud2"),
+  TOPIC_INSTANTIATION("/move_base/MyNavfnROS/visualization_marker",                      "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/inflation_layer/parameter_descriptions","dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/obstacle_layer/parameter_descriptions", "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/constraint_list",                                                "visualization_msgs/MarkerArray"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/static_layer/parameter_descriptions",    "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/gazebo/link_states",                                             "gazebo_msgs/LinkStates"),
+  TOPIC_INSTANTIATION("/move_base/MyDWAPlannerROS/trajectory_cloud",                     "sensor_msgs/PointCloud2"),
+  TOPIC_INSTANTIATION("/gazebo/model_states",                                            "gazebo_msgs/ModelStates"),
+  TOPIC_INSTANTIATION("/clock",                                                          "rosgraph_msgs/Clock"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/obstacle_layer/parameter_updates",      "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/Gobstacles_layer/parameter_descriptions","dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/local_costmap/static_layer/parameter_updates",         "dynamic_reconfigure/Config"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/parameter_descriptions",                "dynamic_reconfigure/ConfigDescription"),
+  TOPIC_INSTANTIATION("/move_base/global_costmap/costmap",                               "nav_msgs/OccupancyGrid"),
+  TOPIC_INSTANTIATION("/gazebo/parameter_updates",                                       "dynamic_reconfigure/Config")
+   );
+}
 
 
 
@@ -624,41 +736,54 @@ class Doer
   }
 };
 */
-
-void recordAnyTopic(rosbag::Bag& bag,ros::NodeHandle &n)
+struct TopicPack
 {
-  /*
-  for( auto& t :Topics)
+  using dT= decltype(getTopicsDefault());
+  dT defaultTopics=getTopicsDefault();
+  using rT= decltype(getTopicsRecovery());
+  rT recoveryTopics=getTopicsRecovery();
+  using gT= decltype(getTopicsDefault());
+  gT ghostingTopics=getTopicsDefault();  //etc for eventually others sets of topics...
+
+
+  void recordAnyTopicDefault(rosbag::Bag& bag,ros::NodeHandle &n) //Must be copied and pasted for now. We need std::queue, so Topic is not constexpr and we can't use templates for these methods
   {
-    t.putMsg(n);
-    t.dump(bag);
+    std::apply([&n,&bag](auto&&... args) {((
+
+          args.putMsg(n) 
+
+            ), ...);}, defaultTopics);
+
   }
-  */
-  std::apply([&n,&bag](auto&&... args) {((
 
-        args.putMsg(n) 
-        //&&
-//        args.dump(bag)
-
-          ), ...);}, Topics);
-
-}
-
-void recordAnyTopic(rosbag::Bag& bag,ros::NodeHandle &n)
-{
-  /*
-  for( auto& t :Topics)
+  void dumpAnyTopicDefault(rosbag::Bag& bag,ros::NodeHandle &n)
   {
-    t.putMsg(n);
-    t.dump(bag);
+    std::apply([&n,&bag](auto&&... args) {((
+
+          args.dump(bag)
+
+            ), ...);}, defaultTopics);
   }
-  */
-  std::apply([&n,&bag](auto&&... args) {((
 
-        args.putMsg(n) 
-        //&&
-//        args.dump(bag)
 
-          ), ...);}, Topics);
 
-}
+  void recordAnyTopicRecovery(rosbag::Bag& bag,ros::NodeHandle &n) 
+  {
+    std::apply([&n,&bag](auto&&... args) {((
+
+          args.putMsg(n) 
+
+            ), ...);}, recoveryTopics);
+
+  }
+
+  void dumpAnyTopicRecovery(rosbag::Bag& bag,ros::NodeHandle &n)
+  {
+    std::apply([&n,&bag](auto&&... args) {((
+
+          args.dump(bag)
+
+            ), ...);}, recoveryTopics);
+  }
+
+};

@@ -40,11 +40,15 @@ int main(int argc, char** argv)
 
 	rosbag::Bag bag;
 	bag.open("/home/melodic3/catkin_ws/src/uvcbag/uvcbag.bag",rosbag::bagmode::Write);
+  auto topics=getTopicsDefault();
+  TopicPack tp;
+
 
 	while(ros::ok())
 	{
 					ros::spinOnce();
-          dumpAnyTopic(bag,n);
+          tp.dumpAnyTopicDefault(bag,n);
+
 		
 	}
 
